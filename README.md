@@ -1,1 +1,1 @@
-# multimodal_prompt
+# vlm_prompting
