@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const request = axios.create({
-	baseURL: 'https://c5176a5fb298.ngrok.app/api/', 
+	baseURL: 'http://localhost:5010/api/', 
     timeout: 5000000
 });
 // const request = axios.create({

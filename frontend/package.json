@@ -21,7 +21,6 @@
     "d3-cloud": "^1.2.7",
     "diff-match-patch": "^1.0.5",
     "element-plus": "^2.5.5",
-    "element-ui": "^2.15.14",
     "vue": "^3.2.13"
   },
   "devDependencies": {

@@ -52,10 +52,9 @@
 <script setup>
 import {
     ElTable,
-    ElTableColumn,
-    ElButton
+    ElTableColumn
 } from 'element-plus'
-import { DocumentAdd } from '@element-plus/icons-vue'
+// import { DocumentAdd } from '@element-plus/icons-vue'
 </script>
 
 

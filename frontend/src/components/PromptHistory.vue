@@ -244,7 +244,7 @@ export default {
             deep: true
         },
         accRecord:{
-            async handler(v) {
+            async handler() {
                 this.drawAcc()
             },
             deep:true
@@ -363,7 +363,7 @@ export default {
                 .enter()
                 .append("text")               // Append a new text element
                 .attr("x", function(d) { return (d.time * singleWidth - singleWidth*0.5) } )
-                .attr("y", function(d) { return (svgheight+margin.bottom) } )
+                .attr("y", function() { return (svgheight+margin.bottom) } )
                 .attr("fill", "black")        // Text color
                 .style("font-size", "12px")   // Font size
                 .style("text-anchor", "middle")
