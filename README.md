@@ -1,5 +1,5 @@
 ### How to run the system
-1. Download image data [here]().
+1. Download image data (extracted_frames, images, segmented_videos_refine) [here]() to ``./frontend/src/assets/``.
 2. Install Python packages (suggest using conda for package management, python3.9 is suggested):
    ```
    cd backend
