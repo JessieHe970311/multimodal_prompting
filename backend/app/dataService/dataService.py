@@ -306,45 +306,6 @@ class DataService(object):
                             [ 43, 213, 34],
                             [ 32, 19, 118]]
  
- 
-        # [[ 163, 31, 24],
-        #  [ 33, 220, 37],
-        #  [ 31, 17, 121]]
- 
-         
-        # [[ 187, 19, 12],
-        #  [ 23, 245, 23],
-        #  [ 27, 18, 124]]
-
-
-        ####### wtag_dataset_metric history
-        # confusion_metric = [[ 212, 59, 83,  38,   0],
-        #                     [  0,  10,  35,   3,   0],
-        #                     [  11,  31, 278,  17,   0],
-        #                     [  0,   5,  17,   4,   1],
-        #                     [  1, 93,  120,   3,   81]]
-
-        # [[ 243, 47, 53,  32,   27],
-        #  [  3,  33,  8,   3,   1],
-        #  [  10,  30, 270,  12,   15],
-        #  [  0,   5,  10,   9,   3],
-        #  [  3,  32, 47,   5,   212]]
-
-        # [[ 283, 37, 23,  42,   17],
-        #  [  2,  30, 14,   3,   1],
-        #  [  14,  23, 259,  29,   12],
-        #  [  1,   4,  5,   15,   2],
-        #  [  3,  32, 36,   13,   215]]
-
-        # [[ 303, 37, 23,  22,   17],
-        #  [  2,  37,  5,   3,   1],
-        #  [  4,  23, 279,  19,   12],
-        #  [  0,   4,  2,   18,   3],
-        #  [  3,  32, 36,   8,   220]]
-
-
-
-
         return {
             'acc': acc, 
             'f1': f1,
@@ -467,24 +428,6 @@ class DataService(object):
         ]
         reasoning = UT.gpt4_generation(prompt_messages)
         return reasoning
-
-
-
-    # def generate_prompt_with_principles(self, principles, instruction, test_instances = None):
-    #     prompt_template = """
-    #         Instruction: {instruction}
-    #         In doing so, please carefully note the following principles:
-    #         Principles: {principles}
-    #         Description: {description}
-    #     """
-    #     prompts = {}
-    #     for videoid in test_instances:
-    #         prompt_messages = [{'role': 'system', 'content':'You are a helpful assistant'}]
-    #         messages = prompt_template.format(instruction = instruction, principles = principles, description = self.test_data[videoid]['description'])
-    #         prompt_messages.append({'role': 'user', 'content': messages})
-    #         prompts[videoid] = prompt_messages
-    
-    #     return prompts
 
 
     def generate_results_for_k_shot_with_reasoning(self):
@@ -721,13 +664,6 @@ class DataService(object):
     
 
 
-
-    #############
-
-    #sampling strategy need to be updated
-
-    #############
-
     ##### random sampling
         # available_pos_candidates = {}
         # available_neg_candidates = {}
@@ -759,178 +695,10 @@ class DataService(object):
 if __name__ == "__main__":
     print('=== dataService ===')
     dataService = DataService()
-
     raw_data = dataService.raw_data
-    # ###############################
-    # # get projections of embedding
-    # ###############################
-    time0 = time.time()
-    embeds = []
-    videos = []
-    for k, v in raw_data.items():
-        videos.append(k)
-        embeds.append(dataService.video_description_embedding[k][0])
-    pos = dataService.proj_data(embeds)
-    print(pos.shape, pos[0])
-    time1 = time.time()
-    print("get embedding duration & shape: ", time1 - time0, pos.shape, len(videos))
-
-    ### save projected data
-    pos_data = {}
-    for v, p in zip(videos, pos):
-        pos_data[v] = p.tolist()
-    
-    with open('pos_data.json', 'w') as f:
-        json.dump(pos_data, f)
 
 
 
 
 
-    # with open('/Users/jessiehe/vlm_prompting/backend/app/data/embedding/mosei_text_embedding.json', 'r') as f:
-    #     text_embedding_dict = json.load(f)
-    # with open('/Users/jessiehe/vlm_prompting/backend/app/data/embedding/mosei_image_embedding.json', 'r') as f:
-    #     image_embedding_dict = json.load(f)
-    
-    # video_embedding_dict = {}
-    # for key in text_embedding_dict.keys():
-    #     text_embeds = torch.tensor(text_embedding_dict[key]['script'])
-    #     text_embeds = text_embeds.unsqueeze(0)
-    #     image_embeds = torch.tensor(image_embedding_dict[key])
-    #     print('image_embeds_shape',image_embeds.shape)
-    #     print('text_embeds_shape',text_embeds.shape)
-    #     video_embedding = torch.cat((image_embeds, text_embeds), dim = 1)
-    #     print('video_embedding_shape',video_embedding.shape)
-    #     video_embedding_dict[key] = video_embedding.tolist()
-    
-    # with open('/Users/jessiehe/vlm_prompting/backend/app/data/embedding/new_mosei_video_embedding.json', 'w') as f:
-    #     json.dump(video_embedding_dict, f)
 
-    # text_description_embedding = dataService.generate_text_description_embedding(dataService.raw_data)
-    # with open('mosei_text_description_embedding.json', 'w') as f:
-    #     json.dump(text_description_embedding, f)
-    
-    # with open('/Users/jessiehe/vlm_prompting/backend/app/data/results/precompute_result_4v_gpt3.5_new.json', 'r') as f:
-    #     precompute_result = json.load(f)
-    # new_data_dict = {}
-    # for key in precompute_result.keys():
-    #     if precompute_result[key]['interaction_type'] == "undecided":
-    #         continue
-    #     else:
-    #         new_data_dict[key] = precompute_result[key]
-    # with open('/Users/jessiehe/vlm_prompting/backend/app/data/results/precompute_result_4v_gpt3.5_new1.json', 'w') as f:
-    #     json.dump(new_data_dict, f)
-    # video_list = dataService.valid_data_list[0:5]
-    # data_result_dict = dataService.generate_results_for_instances(original = True)
-    # low_level_principle_dict = dataService.generate_low_level_principle(video_list, data_result_dict)
-    # with open('low_level_principle_list.json', 'w') as f:
-    #     json.dump(low_level_principle_dict, f)
-    # # print(list(low_level_principle_dict.values))
-    # high_level_principle_list = dataService.generate_high_level_principle(list(low_level_principle_dict.values()))
-    # with open('high_level_principle_list.json', 'w') as f:
-    #     json.dump(high_level_principle_list, f)
-
-    # prompt = dataService.load_prompt_template()
-    # test_data = dataService.valid_data_list[0:50]
-    # retrieved_instances = dataService.retrieve_extra_test_data(source_videos = test_data[0:2])
-    # print(retrieved_instances)
-
-    # data_result = dataService.generate_results_for_instances(original = True)
-    # low_level_principle = dataService.generate_low_level_principle(dataService.valid_data_list[0:2], data_result)
-    # low_level_principle_dict = {}
-    # low_level_principle_dict['content'] = low_level_principle
-    # with open('low_level_principle_list.json', 'w') as f:
-    #     json.dump(low_level_principle_dict, f)
-    # data_result = dataService.generate_results_for_instances(original = True)
-    # reasoning_cue_embedding_path = os.path.join(GV.embed_dir, 'reasoning_cue_embedding.json')
-    # with open(reasoning_cue_embedding_path, 'r') as f:
-    #     reasoning_cue_embedding_dict = json.load(f)
-    # reasoning_pattern_mining = dataService.reasoning_pattern_mining(data_result,reasoning_cue_embedding_dict, list(data_result.keys()))
-    # with open('reasoning_pattern_mining_result.json', 'w') as f:
-    #     json.dump(reasoning_pattern_mining, f)
-
-    # with open('video_dict.json', 'w') as f:
-    #     json.dump(video_dict, f)
-    # processed_result = dataService.pattern_mining_result_processing(reasoning_pattern_mining)
-    # with open('processed_result.json', 'w') as f:
-    #     json.dump(processed_result, f)
-    # precompute_result_path = os.path.join(GV.result_dir, 'precompute_result.json')
-    # with open(precompute_result_path, 'r') as f:
-    #     precompute_result = json.load(f)
-    # for key in precompute_result.keys():
-    #     visual_pred = GV.pred_mapping[precompute_result[key]['prediction']['visual']] if precompute_result[key]['prediction']['visual'] in GV.pred_mapping else -999
-    #     language_pred = GV.pred_mapping[precompute_result[key]['prediction']['language']] if precompute_result[key]['prediction']['language'] in GV.pred_mapping else -999
-    #     precompute_result[key]['modality_type'] = UT.modality_type_computation(language_pred, visual_pred)
-    # with open(precompute_result_path, 'w') as f:
-    #     json.dump(precompute_result, f)
-    # embedding_dict = dataService.compute_embedding(precompute_result)
-    # reasoning_cue_embedding_path = os.path.join(GV.embed_dir, 'reasoning_cue_embedding.json')
-    # with open(reasoning_cue_embedding_path, 'r') as f:
-    #     reasoning_cue_embedding = json.load(f)
-    # index = list(reasoning_cue_embedding.keys())[143]
-    # print(reasoning_cue_embedding[index].keys())
-    
-    # for key in precompute_result.keys():
-    #     precompute_result[key]['frame_num'] = dataService.raw_data[key]['frame_num']
-    # with open(precompute_result_path, 'w') as f:
-    #     json.dump(precompute_result, f)
-    # k_shot_data_with_reasoning_dict = dataService.generate_results_for_k_shot_with_reasoning()
-    # with open('k_shot_data_reasoning_dict.json', 'w') as f:
-    #     json.dump(k_shot_data_with_reasoning_dict, f)
-    # rawdata = dataService.raw_data
-    # updated_dict_with_frame = UT.compute_video_frame(rawdata)
-    # with open('raw_data.json', 'w') as f:
-    #     json.dump(updated_dict_with_frame, f)
-    # traindata = dataService.train_data
-    # print("num of train instances", len(traindata))
-    # samples, labels = UT.dict_to_labels(traindata)
-    # X_shot, X_test, y_shot, y_test = UT.split_dataset_stratified(samples,labels, test_size=0.3, random_state=42)
-    # print('len of X_shot:', len(X_shot))
-    # print('len of X_test:', len(X_test))
-    # print('len of valid', len(dataService.valid_data_list))
-    # split_dict = {
-    #     'valid': dataService.valid_data_list,
-    #     'k_shot': X_shot,
-    #     'extra_test': X_test,
-    # }
-    # with open('data_split.json', 'w') as f:
-    #     json.dump(split_dict, f)
-
-    # reasoning_dict = dataService.generate_reasoning_for_k_shot(list(traindata.keys()))
-    # with open('reasoning_dict.json', 'w') as f:
-    #     json.dump(reasoning_dict, f)
-
-    # result_dict = dataService.generate_results_for_instances(list(testdata.keys()))
-    # with open('result_dict.json', 'w') as f:
-    #     json.dump(result_dict, f)
-    # print(testdata.keys())
-    # generate_revised_reasoning = dataService.generate_revised_reasoning('eOiC1kb17P4-3')
-    # print(generate_revised_reasoning)
-
-    # eval_metric = dataService.eval_metric()
-    # print(eval_metric)
-    # response_dict = dataService.model_response_generation()
-    # selected_demonstration_example = dataService.select_demonstration_examples(source_instances = list(testdata.keys()))
-    # print('selected_demonstration_example: ', selected_demonstration_example)
-    # k_shot_example_prompt = dataService.generate_k_shot_example_prompt(k_shot_example_list = selected_demonstration_example)
-    # print(k_shot_example_prompt)
-
-    # demonstration_example_dict = {}
-    # for videoid in selected_demonstration_example:
-    #     reasoning = dataService.generate_reasoning_for_k_shot(videoid)
-    #     print(reasoning)
-    #     demonstration_example_dict[videoid] = {
-    #         'label': traindata[videoid]['label'],
-    #         'gt': traindata[videoid]['gt'],
-    #         'description': traindata[videoid]['des'],
-    #         'overall_explanation':reasoning,
-
-    #     }
-    # with open('k_shot_example_dict.json', 'w') as f:
-    #     json.dump(demonstration_example_dict, f)
-
-    # result = dataService.eval_metric()
-    # print('the prediction result is:', result)
-    # build_zero_shot_prompt = dataService.build_zero_shot_prompt()
-    # print('zero_shot_prompt', build_zero_shot_prompt[list(build_zero_shot_prompt.keys())[0]])
-    
