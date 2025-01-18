@@ -28,11 +28,13 @@ from transformers import BertTokenizer, BertModel
 from timm import create_model
 from torchvision import transforms
 from PIL import Image
-
-# import matplotlib.pyplot as plt
+from llama_cpp import Llama
+import google.generativeai as genai
+from llava.model.builder import load_pretrained_model
+from llava.mm_utils import get_model_name_from_path
+# from llava.constants import IMAGE_TOKEN_INDEX
+from llava.conversation import conv_templates 
 # from sentence_transformers import SentenceTransformer 
-
-
 
 try:
     import globalVariable as GV
@@ -55,19 +57,154 @@ def create_batches(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def process_video(videoid = '', model_config = "gpt-3.5-turbo-0125", temperature_config = 0, prompts = {}):
+# def process_video(videoid = '', model_config = "gpt-3.5-turbo-0125", temperature_config = 0, prompts = {}):
+#     try:
+#         response_json = client.chat.completions.create(
+#             model= model_config,
+#             temperature= temperature_config,
+#             response_format= {"type": "json_object"},
+#             messages= prompts[videoid]
+#         )
+#         return videoid, response_json.choices[0].message.content, response_json.choices[0].message.role
+#     except Exception as e:
+#         print(f'Error occurred with {videoid}: {e}, retrying...')
+#         time.sleep(10)  # Wait and retry
+#         return process_video(videoid, prompts)
+
+def process_video(videoid='', model_config=None, temperature_config=0, prompts={}):
     try:
-        response_json = client.chat.completions.create(
-            model= model_config,
-            temperature= temperature_config,
-            response_format= {"type": "json_object"},
-            messages= prompts[videoid]
-        )
-        return videoid, response_json.choices[0].message.content, response_json.choices[0].message.role
+        # Parse model configuration
+        provider = model_config.get('provider', 'openai') if isinstance(model_config, dict) else 'openai'
+
+        if provider == 'openai':
+            model_name = model_config if isinstance(model_config, str) else model_config['model_name']
+            
+            # Check if using GPT-4 Vision
+            if 'vision' in model_name:
+                # Process messages to include image URLs/base64
+                vision_messages = []
+                for msg in prompts[videoid]:
+                    if msg['role'] == 'user':
+                        content = []
+                        # Add text if present
+                        if isinstance(msg['content'], str):
+                            content.append({"type": "text", "text": msg['content']})
+                        # Add images if present
+                        if 'images' in msg:
+                            for image in msg['images']:
+                                content.append({
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": image if isinstance(image, str) else image.get('url'),
+                                        # Optionally support base64
+                                        # "url": f"data:image/jpeg;base64,{image}" if isinstance(image, str) else image.get('url')
+                                    }
+                                })
+                        vision_messages.append({"role": msg['role'], "content": content})
+                    else:
+                        vision_messages.append(msg)
+                response_json = client.chat.completions.create(
+                    model=model_name,
+                    temperature=temperature_config,
+                    response_format={"type": "json_object"},
+                    messages=vision_messages,
+                    max_tokens=model_config.get('max_tokens', 4096)
+                )
+            else:
+                # Standard OpenAI text completion
+                response_json = client.chat.completions.create(
+                    model=model_name,
+                    temperature=temperature_config,
+                    response_format={"type": "json_object"},
+                    messages=prompts[videoid]
+                )
+            return videoid, response_json.choices[0].message.content, response_json.choices[0].message.role
+                
+
+        elif provider == 'llava':
+            model_path = model_config['model_path']
+            model_name = get_model_name_from_path(model_path)
+            tokenizer, model, image_processor, context_len = load_pretrained_model(
+                model_path=model_path,
+                model_base=model_config.get('model_base', None),
+                model_name=model_name
+            )
+            images = prompts[videoid].get('images', [])
+            if images:
+                image_tensors = [image_processor(image) for image in images]
+            else:
+                image_tensors = []
+
+            # Prepare conversation
+            conv = conv_templates[model_config.get('conv_mode', 'llava_v1')].copy()
+            conv.append_message(conv.roles[0], prompts[videoid][-1]['content'])
+            conv.append_message(conv.roles[1], None)
+            prompt = conv.get_prompt()
+            
+            # Generate response
+            input_ids = tokenizer([prompt]).input_ids
+            with torch.inference_mode():
+                output_ids = model.generate(
+                    input_ids=torch.tensor(input_ids).cuda(),
+                    images=torch.stack(image_tensors).cuda() if image_tensors else None,
+                    temperature=temperature_config,
+                    max_new_tokens=model_config.get('max_new_tokens', 512),
+                    do_sample=True
+                )
+            
+            response = tokenizer.decode(output_ids[0, input_ids[0].shape[0]:], skip_special_tokens=True)
+            return videoid, response, 'assistant'
+        
+        elif provider == 'gemini':
+            genai.configure(api_key=model_config['api_key'])
+            model = genai.GenerativeModel('gemini-pro-vision')
+            images = prompts[videoid].get('images', [])
+            response = model.generate_content(
+                [prompts[videoid][-1]['content'], *images],
+                generation_config={"temperature": temperature_config}
+            )
+            return videoid, response.text, 'assistant'
+
+        elif provider == 'llama':
+            # Initialize Llama model if not already loaded
+            if not hasattr(process_video, 'llama_model'):
+                process_video.llama_model = Llama(
+                    model_path=model_config['model_path'],
+                    n_ctx=model_config.get('n_ctx', 4096),
+                    n_gpu_layers=model_config.get('n_gpu_layers', -1),
+                    verbose=model_config.get('verbose', False)
+                )
+            messages = prompts[videoid]
+            formatted_prompt = ""
+            for msg in messages:
+                if msg['role'] == 'system':
+                    formatted_prompt += f"System: {msg['content']}\n\n"
+                elif msg['role'] == 'user':
+                    formatted_prompt += f"User: {msg['content']}\n\n"
+                elif msg['role'] == 'assistant':
+                    formatted_prompt += f"Assistant: {msg['content']}\n\n"
+            formatted_prompt += "Assistant: "
+
+            # Generate response
+            response = process_video.llama_model.create_completion(
+                prompt=formatted_prompt,
+                max_tokens=model_config.get('max_tokens', 512),
+                temperature=temperature_config,
+                top_p=model_config.get('top_p', 0.95),
+                stop=["User:", "\n\nUser:", "System:"],
+                echo=False
+            )
+            return videoid, response['choices'][0]['text'].strip(), 'assistant'
+        
+        else:
+            raise ValueError(f"Unsupported provider: {provider}")
+            
     except Exception as e:
         print(f'Error occurred with {videoid}: {e}, retrying...')
-        time.sleep(10)  # Wait and retry
-        return process_video(videoid, prompts)
+        time.sleep(10)
+        return process_video(videoid, model_config, temperature_config, prompts)
+    
+
 
 def model_batch_generation(BATCH_SIZE = 10, video_list = [], model_config = "gpt-3.5-turbo-0125", temperature_config = 0, prompts = {}):
     response_dict = {}

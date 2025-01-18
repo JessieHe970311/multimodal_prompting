@@ -166,3 +166,4 @@ segmented_videos_refine/
 data_dict_0212.json
 reasoning_cue_embedding_4v_gpt3.5.json
 reasoning_cue_embedding_4v_gpt4.json
+models/

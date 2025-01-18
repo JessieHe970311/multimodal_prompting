@@ -11,6 +11,7 @@ import importlib_metadata
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.metrics import confusion_matrix
+from app.dataService.globalVariable import LLAMA_MODEL_PATH, LLAVA_MODEL_PATH
 
 try:
     import globalVariable as GV
@@ -48,9 +49,42 @@ class DataService(object):
     def __init__(self):
         self.name = "dataService"
         self.GV = GV
-        self.model_config = 'gpt-3.5-turbo-0125'
+        self.model_config = {
+            'openai': {
+                'provider': 'openai',
+                'model_name': 'gpt-3.5-turbo-0125'
+            },
+            'llava': {
+                'provider': 'llava',
+                'model_path': LLAVA_MODEL_PATH,
+                'model_base': 'liuhaotian/llava-v1.5-13b',
+                'conv_mode': 'llava_v1',
+                'max_new_tokens': 512
+            },
+            'gemini': {
+                'provider': 'gemini',
+                'api_key': os.getenv('GEMINI_API_KEY')
+            },
+            'llama': {
+                'provider': 'llama',
+                'model_path': LLAMA_MODEL_PATH,
+                # Context window parameters
+                'n_ctx': 4096,           # Maximum context length in tokens
+                'n_gpu_layers': -1,      # Number of layers to offload to GPU
+                'temperature': 0.7,       # Randomness in generation (0.0 to 1.0)
+                'top_p': 0.95,           # Nucleus sampling parameter
+                'top_k': 40,             # Top-k sampling parameter
+                'max_tokens': 512,        # Maximum number of tokens to generate
+                'repeat_penalty': 1.1,    # Penalty for repeating tokens
+                'n_batch': 512,          # Batch size for prompt processing
+                'n_threads': 4,          # Number of CPU threads to use
+                # Debug options
+                'verbose': False,         # Enable verbose logging
+            }
+        }  
         self.temperature_config = 0
         self.dataset = 'CMU-MOSEI'
+        self.current_provider = 'openai'
         self.num_k = 5
         self.current_prompt = {}
         self.k_shot_example_dict = {}
