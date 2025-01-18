@@ -52,7 +52,7 @@ class DataService(object):
         self.model_config = {
             'openai': {
                 'provider': 'openai',
-                'model_name': 'gpt-3.5-turbo-0125'
+                'model_name': 'gpt4v'
             },
             'llava': {
                 'provider': 'llava',
@@ -97,7 +97,7 @@ class DataService(object):
 
 
     ### initialization to load all data
-    def load_all_data(self, datasetType = 'CMU-MOSEI', modelType = 'gpt-3.5-turbo-0125'):
+    def load_all_data(self, datasetType = 'CMU-MOSEI', modelType = 'gpt4v'):
         # video_description_embedding = {}
         # valid_data_with_intial_result_path = os.path.join(GV.data_dir, 'valid_data_with_initial_result.json')
         # valid_data_list_path = os.path.join(GV.data_dir, 'valid_data_list.json')
@@ -335,10 +335,8 @@ class DataService(object):
         f1 = f1_score(ground_truth, predictions, average='macro')
         precision = precision_score(ground_truth, predictions, average='macro')
         recall = recall_score(ground_truth, predictions, average='macro')
-        # confusion_metric = confusion_matrix(ground_truth, predictions, labels=[-1, 0, 1]).tolist()
-        confusion_metric = [[ 146, 52, 20],
-                            [ 43, 213, 34],
-                            [ 32, 19, 118]]
+        confusion_metric = confusion_matrix(ground_truth, predictions, labels=[-1, 0, 1]).tolist()
+
  
         return {
             'acc': acc, 
@@ -696,33 +694,6 @@ class DataService(object):
         pos = UT.reduce_project_features_tsne(data)
         return pos
     
-
-
-    ##### random sampling
-        # available_pos_candidates = {}
-        # available_neg_candidates = {}
-        # available_neutral_candidates = {}
-        # for videoid in self.train_data.keys():
-        #     if self.train_data[videoid]['gt'] == 'positive':
-        #         available_pos_candidates[videoid] = self.train_data[videoid]
-        #     if self.train_data[videoid]['gt'] == 'negative':
-        #         available_neg_candidates[videoid] = self.train_data[videoid]
-        #     if self.train_data[videoid]['gt'] == 'neutral':
-        #         available_neutral_candidates[videoid] = self.train_data[videoid]
-
-        # random.seed(42)
-        # try:
-        #     pos_few_shot = random.sample(list(available_pos_candidates.keys()), args.few_shot_example_num // 2)
-        # except:
-        #     pos_few_shot = random.sample(list(dataset.keys()), args.few_shot_example_num // 2)
-        # try:
-        #     neg_few_shot = random.sample(list(available_neg_candidates.keys()), args.few_shot_example_num - args.few_shot_example_num // 2)
-        # except:
-        #     neg_few_shot = random.sample(list(dataset.keys()), args.few_shot_example_num - args.few_shot_example_num // 2)
-
-        
-        # return pos_few_shot + neg_few_shot
-    ##### random sampling
 
 
 
